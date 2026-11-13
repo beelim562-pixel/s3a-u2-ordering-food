@@ -101,6 +101,35 @@
     .big-emoji { font-size: 8rem; display: flex; justify-content: center; align-items: center; min-height: 150px; margin: 10px 0; }
     .word-title { font-size: 3.5rem; color: var(--primary); margin: 10px 0; font-weight: bold; }
     
+    .listen-order-text {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: var(--text);
+      background: #FFF3E0;
+      border: 4px solid #FF9F43;
+      border-radius: 20px;
+      padding: 14px 18px;
+      margin: 10px 0 16px;
+      line-height: 1.4;
+    }
+    .listen-visual {
+      display: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 0 0 16px;
+    }
+    .listen-visual.show { display: flex; }
+    .listen-visual-card {
+      background: #fff;
+      border: 4px solid #E07A5F;
+      border-radius: 18px;
+      padding: 10px 14px;
+      min-width: 110px;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+    .listen-visual-card .pic { font-size: 2.8rem; display: block; }
     .speak-btn {
       background: var(--secondary);
       color: white;
@@ -546,7 +575,12 @@
           🍽️ Ordered: <span id="listen-packed-count" style="color:#2ECC71;">0</span> / <span id="listen-target-total" style="color:#2ECC71;">0</span>
         </div>
 
-        <button class="speak-btn" style="margin-bottom:15px; background:#9B59B6;" onclick="playListenPrompt()">🔊 聽指令 (Listen Prompt)</button>
+        <div class="listen-order-text" id="listen-order-text">May I have a cake, please?</div>
+        <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-bottom:15px;">
+          <button class="speak-btn" style="margin-top:0; background:#9B59B6;" onclick="playListenPrompt()">🔊 Listen</button>
+          <button class="speak-btn" style="margin-top:0; background:#E07A5F;" onclick="toggleVisualPrompt()">👀 Visual prompt</button>
+        </div>
+        <div class="listen-visual" id="listen-visual"></div>
         
         <div class="listen-pack-area">
           <div class="shelf-container" id="shelf-container"></div>
@@ -1058,25 +1092,52 @@
       });
 
       playListenPrompt();
+      renderListenWords();
+      const vis = document.getElementById('listen-visual');
+      vis.classList.remove('show');
+      vis.innerHTML = '';
     }
 
-    function playListenPrompt() {
-      const parts = currentListenRequirements.map(req => {
+    function orderParts() {
+      return currentListenRequirements.map(req => {
         const item = foodData[req.key];
         if (req.count === 1) return `${item.article} ${item.word}`;
         return `${req.count} ${item.plural}`;
       });
+    }
 
-      let sentence = "";
-      if (parts.length === 1) {
-        sentence = `May I have ${parts[0]}, please? Put it on the tray.`;
-      } else if (parts.length === 2) {
-        sentence = `May I have ${parts[0]} and ${parts[1]}, please? Put them on the tray.`;
-      } else {
-        sentence = `May I have ${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}, please? Put them on the tray.`;
+    function orderSentence() {
+      const parts = orderParts();
+      if (parts.length === 1) return `May I have ${parts[0]}, please?`;
+      if (parts.length === 2) return `May I have ${parts[0]} and ${parts[1]}, please?`;
+      return `May I have ${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}, please?`;
+    }
+
+    function renderListenWords() {
+      document.getElementById('listen-order-text').innerText = orderSentence();
+    }
+
+    function toggleVisualPrompt() {
+      const vis = document.getElementById('listen-visual');
+      if (vis.classList.contains('show')) {
+        vis.classList.remove('show');
+        vis.innerHTML = '';
+        return;
       }
+      vis.innerHTML = '';
+      currentListenRequirements.forEach(req => {
+        const item = foodData[req.key];
+        const card = document.createElement('div');
+        card.className = 'listen-visual-card';
+        const label = req.count === 1 ? `${item.article} ${item.word}` : `${req.count} ${item.plural}`;
+        card.innerHTML = `<span class="pic">${item.icon}</span>${label}`;
+        vis.appendChild(card);
+      });
+      vis.classList.add('show');
+    }
 
-      speakText(sentence);
+    function playListenPrompt() {
+      speakText(orderSentence() + ' Put it on the tray.');
     }
 
     function checkAndPackItem(key, itemElement) {

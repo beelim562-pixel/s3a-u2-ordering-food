@@ -63,6 +63,9 @@
     }
     .item-card:active { transform: scale(1.05); }
     .item-card .emoji { font-size: 6rem; display: flex; justify-content: center; align-items: center; min-height: 120px; margin-bottom: 10px; }
+    .item-card .emoji svg, .big-emoji svg { width: 1.15em; height: 1.15em; display: block; }
+    .hidden-target-item svg { width: 52px; height: 52px; }
+    .listen-visual-card .pic svg { width: 2.8rem; height: 2.8rem; display: block; margin: 0 auto; }
     .item-card h2 { font-size: 2.2rem; color: var(--primary); text-transform: capitalize; }
     .item-card .cn-label { font-size: 1.5rem; color: #7F8C8D; margin-top: 5px; }
 
@@ -492,7 +495,7 @@
           <div class="cn-label">可樂</div>
         </div>
         <div class="item-card" onclick="openModule('applepie')">
-          <span class="emoji">🥧</span>
+          <span class="emoji" id="hub-applepie-icon"></span>
           <h2>apple pie</h2>
           <div class="cn-label">蘋果批</div>
         </div>
@@ -616,14 +619,45 @@
   </div>
 
   <script>
+    const applePieSVG = `
+      <svg class="apple-pie-svg" viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <ellipse cx="110" cy="100" rx="72" ry="7" fill="#000" opacity="0.12"/>
+        <g transform="rotate(-14 148 58)">
+          <rect x="102" y="40" width="88" height="34" rx="7" fill="#C9893A"/>
+          <rect x="104" y="42" width="84" height="30" rx="6" fill="#E8B85A"/>
+          <rect x="108" y="44" width="76" height="12" rx="4" fill="#F3D48A" opacity="0.85"/>
+          <circle cx="118" cy="52" r="2.2" fill="#FFF6D6"/>
+          <circle cx="132" cy="50" r="1.8" fill="#FFF6D6"/>
+          <circle cx="148" cy="53" r="2" fill="#FFF6D6"/>
+          <circle cx="164" cy="51" r="1.6" fill="#FFF6D6"/>
+          <path d="M176 68 Q192 74 186 90 Q172 82 170 70 Z" fill="#E0A030"/>
+          <ellipse cx="178" cy="72" rx="10" ry="7" fill="#F5C84A"/>
+          <circle cx="174" cy="74" r="3.2" fill="#C97820"/>
+          <circle cx="182" cy="76" r="2.4" fill="#D9922C"/>
+        </g>
+        <g transform="rotate(-20 70 56)">
+          <path d="M16 32 L122 16 L134 68 L28 86 Z" fill="#6AAF3C"/>
+          <path d="M16 32 L122 16 L124 28 L18 44 Z" fill="#8BC34A"/>
+          <path d="M22 48 L128 32 L132 52 L26 68 Z" fill="#33691E"/>
+          <ellipse cx="108" cy="40" rx="11" ry="8" fill="#F6E3B8"/>
+          <ellipse cx="86" cy="44" rx="8" ry="6.5" fill="#F6E3B8"/>
+          <circle cx="54" cy="52" r="9" fill="#F1F8E9"/>
+          <path d="M54 44 C50 48 50 56 54 60 C58 56 58 48 54 44 Z" fill="#7CB342"/>
+          <path d="M54 44 C56 40 60 40 61 43" stroke="#558B2F" stroke-width="1.4" fill="none"/>
+        </g>
+      </svg>
+    `;
+
     const foodData = {
       cake:       { word: 'cake',         spell: 'cake',         plural: 'cakes',         article: 'a',    zh: '蛋糕',   sentence: 'May I have a cake, please?',         icon: '🍰' },
       icecream:   { word: 'ice-cream',    spell: 'ice-cream',    plural: 'ice-creams',    article: 'an',   zh: '雪糕',   sentence: 'May I have an ice-cream, please?',    icon: '🍦' },
       hamburger:  { word: 'hamburger',    spell: 'hamburger',    plural: 'hamburgers',    article: 'a',    zh: '漢堡包', sentence: 'May I have a hamburger, please?',     icon: '🍔' },
       fries:      { word: 'French fries', spell: 'fries',        plural: 'French fries',  article: 'some', zh: '炸薯條', sentence: 'May I have some French fries, please?', icon: '🍟' },
       coke:       { word: 'coke',         spell: 'coke',         plural: 'cokes',         article: 'a',    zh: '可樂',   sentence: 'May I have a coke, please?',          icon: '🥤' },
-      applepie:   { word: 'apple pie',    spell: 'applepie',     plural: 'apple pies',    article: 'an',   zh: '蘋果批', sentence: 'May I have an apple pie, please?',    icon: '🥧' }
+      applepie:   { word: 'apple pie',    spell: 'applepie',     plural: 'apple pies',    article: 'an',   zh: '蘋果批', sentence: 'May I have an apple pie, please?',    icon: applePieSVG }
     };
+
+    document.getElementById('hub-applepie-icon').innerHTML = foodData.applepie.icon;
 
     const cafeItems = [
       { name: 'table', emoji: '🍽️', sizeClass: 'size-desk', top: 30, left: 38 },

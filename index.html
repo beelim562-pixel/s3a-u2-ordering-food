@@ -323,13 +323,17 @@
       display: none;
     }
 
-    .letter-slots { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
+    .letter-slots { display: flex; justify-content: center; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
     .slot {
       width: 65px; height: 75px; border: 4px dashed #94A3B8; border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
       font-size: 3rem; font-weight: bold; color: var(--primary); background: white;
     }
     .slot.filled { border-style: solid; border-color: var(--primary); background: #EFF6FF; }
+    .slot.space-slot {
+      width: 28px; border: none; background: transparent;
+      pointer-events: none;
+    }
     .letter-options { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 15px; }
     .letter-tile {
       width: 65px; height: 65px; background: white; border: 3px solid #CBD5E1; border-bottom: 6px solid #94A3B8;
@@ -654,7 +658,7 @@
       hamburger:  { word: 'hamburger',    spell: 'hamburger',    plural: 'hamburgers',    article: 'a',    zh: '漢堡包', sentence: 'May I have a hamburger, please?',     icon: '🍔' },
       fries:      { word: 'French fries', spell: 'fries',        plural: 'French fries',  article: 'some', zh: '炸薯條', sentence: 'May I have some French fries, please?', icon: '🍟' },
       coke:       { word: 'coke',         spell: 'coke',         plural: 'cokes',         article: 'a',    zh: '可樂',   sentence: 'May I have a coke, please?',          icon: '🥤' },
-      applepie:   { word: 'apple pie',    spell: 'applepie',     plural: 'apple pies',    article: 'an',   zh: '蘋果批', sentence: 'May I have an apple pie, please?',    icon: applePieSVG }
+      applepie:   { word: 'apple pie',    spell: 'apple pie',     plural: 'apple pies',    article: 'an',   zh: '蘋果批', sentence: 'May I have an apple pie, please?',    icon: applePieSVG }
     };
 
     document.getElementById('hub-applepie-icon').innerHTML = foodData.applepie.icon;
@@ -952,10 +956,32 @@
       initSpellingGame();
     }
 
+    function addSpellSlot(container, ch, mode) {
+      const slot = document.createElement('div');
+      if (ch === ' ') {
+        slot.className = 'slot space-slot';
+        slot.dataset.space = '1';
+        container.appendChild(slot);
+        return;
+      }
+      if (mode === 'blank') {
+        slot.className = 'slot';
+        slot.innerText = '';
+      } else if (mode === 'ask') {
+        slot.className = 'slot';
+        slot.innerText = '?';
+      } else {
+        slot.className = 'slot filled';
+        slot.innerText = ch;
+      }
+      container.appendChild(slot);
+    }
+
     function initSpellingGame() {
       spellingUserLetters = [];
       const item = foodData[currentItemKey];
       const word = item.spell.toLowerCase();
+      const lettersOnly = [...word].filter(ch => ch !== ' ');
       document.getElementById('spelling-emoji').innerHTML = item.icon;
 
       const slotsContainer = document.getElementById('letter-slots');
@@ -964,12 +990,7 @@
       optionsContainer.innerHTML = '';
 
       if (currentSpellingLevel === 1) {
-        for (let i = 0; i < word.length; i++) {
-          const slot = document.createElement('div');
-          slot.className = i === 0 ? 'slot' : 'slot filled';
-          slot.innerText = i === 0 ? '?' : word[i];
-          slotsContainer.appendChild(slot);
-        }
+        for (let i = 0; i < word.length; i++) addSpellSlot(slotsContainer, word[i], i === 0 ? 'ask' : 'show');
         const options = ['p', 'r', 'e', 's', 'g', 't'].sort(() => Math.random() - 0.5);
         if (!options.includes(word[0])) options[0] = word[0];
 
@@ -983,7 +1004,7 @@
               slotsContainer.children[0].innerText = lettr;
               slotsContainer.children[0].classList.add('filled');
               triggerGrandFireworks();
-              speakText(`${word}! Great job!`);
+              speakText(`${item.word}! Great job!`);
             } else {
               speakText('Try again!');
             }
@@ -993,12 +1014,7 @@
 
       } else if (currentSpellingLevel === 2) {
         const lastIdx = word.length - 1;
-        for (let i = 0; i < word.length; i++) {
-          const slot = document.createElement('div');
-          slot.className = i === lastIdx ? 'slot' : 'slot filled';
-          slot.innerText = i === lastIdx ? '?' : word[i];
-          slotsContainer.appendChild(slot);
-        }
+        for (let i = 0; i < word.length; i++) addSpellSlot(slotsContainer, word[i], i === lastIdx ? 'ask' : 'show');
         const options = ['n', 'r', 'l', 's', 'e'].sort(() => Math.random() - 0.5);
         if (!options.includes(word[lastIdx])) options[0] = word[lastIdx];
 
@@ -1012,7 +1028,7 @@
               slotsContainer.children[lastIdx].innerText = lettr;
               slotsContainer.children[lastIdx].classList.add('filled');
               triggerGrandFireworks();
-              speakText(`${word}! Great job!`);
+              speakText(`${item.word}! Great job!`);
             } else {
               speakText('Try again!');
             }
@@ -1021,33 +1037,32 @@
         });
 
       } else {
-        for (let i = 0; i < word.length; i++) {
-          const slot = document.createElement('div');
-          slot.className = 'slot';
-          slot.innerText = '';
-          slotsContainer.appendChild(slot);
-        }
-        const letters = word.split('').sort(() => Math.random() - 0.5);
+        for (let i = 0; i < word.length; i++) addSpellSlot(slotsContainer, word[i], word[i] === ' ' ? 'show' : 'blank');
+        const letters = lettersOnly.slice().sort(() => Math.random() - 0.5);
         letters.forEach(lettr => {
           const tile = document.createElement('div');
           tile.className = 'letter-tile';
           tile.innerText = lettr;
           tile.onclick = () => {
-            if (spellingUserLetters.length < word.length) {
-              speakText(lettr);
-              const nextIdx = spellingUserLetters.length;
-              slotsContainer.children[nextIdx].innerText = lettr;
-              slotsContainer.children[nextIdx].classList.add('filled');
-              spellingUserLetters.push(lettr);
+            if (spellingUserLetters.length >= lettersOnly.length) return;
+            speakText(lettr === '-' ? 'hyphen' : lettr);
+            let nextSlot = null;
+            for (const el of slotsContainer.children) {
+              if (el.dataset.space) continue;
+              if (!el.classList.contains('filled')) { nextSlot = el; break; }
+            }
+            if (!nextSlot) return;
+            nextSlot.innerText = lettr;
+            nextSlot.classList.add('filled');
+            spellingUserLetters.push(lettr);
 
-              if (spellingUserLetters.length === word.length) {
-                if (spellingUserLetters.join('') === word) {
-                  triggerGrandFireworks();
-                  speakText(`Awesome! ${word}!`);
-                } else {
-                  speakText('Try again!');
-                  setTimeout(initSpellingGame, 1000);
-                }
+            if (spellingUserLetters.length === lettersOnly.length) {
+              if (spellingUserLetters.join('') === lettersOnly.join('')) {
+                triggerGrandFireworks();
+                speakText(`Awesome! ${item.word}!`);
+              } else {
+                speakText('Try again!');
+                setTimeout(initSpellingGame, 1000);
               }
             }
           };
